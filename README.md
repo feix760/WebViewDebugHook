@@ -10,7 +10,7 @@ But the most app are third parties, webview debugging is disabled. WebViewDebugH
 ## Requirement
 - Android 4.4+
 
-- Rooted you device
+- Rooted device
 
 - Installed xposed framework
 
