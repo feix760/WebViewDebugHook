@@ -3,7 +3,7 @@
 From [https://developer.chrome.com/devtools/docs/remote-debugging](https://developer.chrome.com/devtools/docs/remote-debugging) we can use blow code to debugging webview on android 4.4+.
 
 ```java
-WebView.setWebContentsDebuggingEnabled(true);
+    WebView.setWebContentsDebuggingEnabled(true);
 ```
 But the most app are third parties, webview debugging is disabled. WebViewDebugHook can force app to debugging.
 
@@ -15,9 +15,9 @@ But the most app are third parties, webview debugging is disabled. WebViewDebugH
 - Installed xposed framework
 
 ## Note
-- libs/XposedBridgeApi-30.jar should not build to app file.
+- libs/XposedBridgeApi-XX.jar should not build to app file.
 
-- Tencent QQ use it's X5 kernel, and could not debugging. You can make a file named `debug.conf` with blow content in the root directory to force it use webview.
+- Tencent QQ use it's X5 kernel, and could not debugging. We can make a file named `debug.conf` with blow content in the root directory to force it use webview.
 
 ```ini
     result_QProxy=false
