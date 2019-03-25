@@ -1,6 +1,6 @@
 # WebViewDebugHook
 
-From [https://developer.chrome.com/devtools/docs/remote-debugging](https://developer.chrome.com/devtools/docs/remote-debugging) we can use blow code to debugging webview on android 4.4+.
+From https://developers.google.com/web/tools/chrome-devtools/remote-debugging we can use blow code to debugging webview on android 4.4+.
 
 ```java
     WebView.setWebContentsDebuggingEnabled(true);
@@ -17,7 +17,7 @@ But the most app are third parties, webview debugging is disabled. WebViewDebugH
 
 ## Xposed module Download
 
-- [WebViewDebugHook.apk](app/release/app-release.apk)
+- [WebViewDebugHook.apk](app/release/app-release.apk?raw=true)
 
 ## Supported Webview
 
