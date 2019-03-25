@@ -5,7 +5,7 @@ From https://developers.google.com/web/tools/chrome-devtools/remote-debugging we
 ```java
     WebView.setWebContentsDebuggingEnabled(true);
 ```
-But the most app are third parties, webview debugging is disabled. WebViewDebugHook can force app to debugging.
+But the most app are third parties, webview debugging is disabled, `WebViewDebugHook` can force them to debugging.
 
 ## Requirement
 
