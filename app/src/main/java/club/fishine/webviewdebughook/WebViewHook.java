@@ -8,8 +8,11 @@ import de.robv.android.xposed.callbacks.XC_LoadPackage.LoadPackageParam;
 
 public class WebViewHook implements IXposedHookLoadPackage {
     public void handleLoadPackage(final LoadPackageParam lpparam) throws Throwable {
-        XposedBridge.log("Loaded app: " + lpparam.packageName);
         final String packageName = lpparam.packageName;
+
+        if (packageName.equals("com.android.webview")) {
+            return;
+        }
 
         // android webview & tencent x5 & UC
         final String[] webviewList = {"android.webkit.WebView", "com.tencent.smtt.sdk.WebView", "com.uc.webview.export.WebView"};
@@ -38,8 +41,10 @@ public class WebViewHook implements IXposedHookLoadPackage {
                 XposedBridge.hookAllMethods(cla, "setWebContentsDebuggingEnabled", new XC_MethodHook() {
                     @Override
                     protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
-                        param.args[0] = true;
-                        XposedBridge.log(className + ".setWebContentsDebuggingEnabled(), " + packageName);
+                        if (param.args[0] != Boolean.TRUE) {
+                            param.args[0] = true;
+                            XposedBridge.log(className + ".setWebContentsDebuggingEnabled(), " + packageName);
+                        }
                     }
                 });
             }
