@@ -1,0 +1,17 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="club.fishine.webviewdebughook">
+
+    <application
+        android:icon="@drawable/logo"
+        android:label="WebViewDebugHook">
+        <meta-data
+            android:name="xposedmodule"
+            android:value="WebViewHook" />
+        <meta-data
+            android:name="xposeddescription"
+            android:value="Use Xposed force all webView to debug on android 4.4+" />
+        <meta-data
+            android:name="xposedminversion"
+            android:value="53" />
+    </application>
+</manifest>
