@@ -1,6 +1,7 @@
 package club.fishine.webviewdebughook;
 
 
+import java.lang.reflect.Method;
 import java.security.SecureClassLoader;
 import java.util.HashMap;
 
@@ -15,19 +16,35 @@ public class WebViewHook implements IXposedHookLoadPackage {
 
     private HashMap<String, LRUCache<String, Boolean>> hookedClassLoader = new HashMap<>();
 
-    private boolean markClassLoaderHooked(final String packageName, ClassLoader classLoader) {
+    private boolean markClassLoaderHooked(final String packageName, String name, ClassLoader classLoader) {
         LRUCache<String, Boolean> maps = hookedClassLoader.get(packageName);
         if (maps == null) {
             maps = new LRUCache<>(10000);
             hookedClassLoader.put(packageName, maps);
         }
-        String loaderHash = "" + classLoader.hashCode();
+        String key = name + "@" + classLoader.hashCode();
 
-        if (maps.get(loaderHash) == null) {
-            maps.put(loaderHash, true);
+        if (maps.get(key) == null) {
+            maps.put(key, true);
             return true;
         }
         return false;
+    }
+
+    private Class findClass(String className, ClassLoader classLoader) {
+        try {
+            return XposedHelpers.findClass(className, classLoader);
+        } catch (Throwable exception) {
+        }
+        return null;
+    }
+
+    private Method findMethod(Class cla, String methodName) {
+        try {
+            return XposedHelpers.findMethodExact(cla, methodName);
+        } catch (Throwable exception) {
+        }
+        return null;
     }
 
     private void hookWebView(final ClassLoader classLoader, final String packageName) {
@@ -39,15 +56,9 @@ public class WebViewHook implements IXposedHookLoadPackage {
         for (int i = 0; i < webviewList.length; i++) {
             final String className = webviewList[i];
 
-            Class findCla = null;
+            final Class cla = this.findClass(className, classLoader);
 
-            try {
-                findCla = XposedHelpers.findClass(className, classLoader); // will throw exception
-            } catch (Throwable exception) {
-            }
-
-            if (findCla != null && markClassLoaderHooked(packageName, findCla.getClassLoader())) {
-                final Class cla = findCla;
+            if (cla != null && markClassLoaderHooked(packageName, className, cla.getClassLoader())) {
 
                 XposedBridge.log(packageName + " hook " + className + "@" + cla.getClassLoader().getClass().getName() + ":" + cla.getClassLoader().hashCode());
 
@@ -68,7 +79,24 @@ public class WebViewHook implements IXposedHookLoadPackage {
                     }
                 });
             }
+        }
 
+        if (packageName.equals("com.taobao.taobao")) {
+            final String className = "c8.STbr";
+            final String methodName = "isAppDebug";
+            final Class cla = this.findClass(className, classLoader);
+            if (cla != null && this.findMethod(cla, methodName) != null && markClassLoaderHooked(packageName, className, cla.getClassLoader())) {
+
+                XposedBridge.log(packageName + " hook " + className + "." + methodName + "()@" + cla.getClassLoader().getClass().getName() + ":" + cla.getClassLoader().hashCode());
+
+                XposedBridge.hookAllMethods(cla, methodName, new XC_MethodHook() {
+                    @Override
+                    protected void afterHookedMethod(MethodHookParam param) throws Throwable {
+                        XposedBridge.log(packageName + " " + className + "." + methodName + "()");
+                        param.setResult(true);
+                    }
+                });
+            }
         }
     }
 
