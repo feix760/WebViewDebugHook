@@ -1,11 +1,13 @@
 package club.fishine.webviewdebughook;
 
 
-import java.lang.reflect.Method;
+import dalvik.system.BaseDexClassLoader;
+
 import java.security.SecureClassLoader;
 import java.util.HashMap;
 
-import dalvik.system.BaseDexClassLoader;
+import java.lang.reflect.Method;
+
 import de.robv.android.xposed.IXposedHookLoadPackage;
 import de.robv.android.xposed.XC_MethodHook;
 import de.robv.android.xposed.XposedBridge;
@@ -47,6 +49,16 @@ public class WebViewHook implements IXposedHookLoadPackage {
         return null;
     }
 
+    private void hookAll(final ClassLoader classLoader, final String packageName) {
+        hookWebView(classLoader, packageName);
+
+        hookXWalkView(classLoader, packageName);
+
+        if (packageName.equals("com.taobao.taobao")) {
+            hookTaobao(classLoader, packageName);
+        }
+    }
+
     private void hookWebView(final ClassLoader classLoader, final String packageName) {
         final String[] webviewList = {
                 "android.webkit.WebView", // android webview
@@ -81,22 +93,55 @@ public class WebViewHook implements IXposedHookLoadPackage {
             }
         }
 
-        if (packageName.equals("com.taobao.taobao")) {
-            final String className = "c8.STbr";
-            final String methodName = "isAppDebug";
-            final Class cla = this.findClass(className, classLoader);
-            if (cla != null && this.findMethod(cla, methodName) != null && markClassLoaderHooked(packageName, className, cla.getClassLoader())) {
+    }
 
-                XposedBridge.log(packageName + " hook " + className + "." + methodName + "()@" + cla.getClassLoader().getClass().getName() + ":" + cla.getClassLoader().hashCode());
+    private void hookXWalkView(final ClassLoader classLoader, final String packageName) {
+        final String className = "org.xwalk.core.XWalkView";
+        final String classNameXWalkPreferences = "org.xwalk.core.XWalkPreferences";
+        final String REMOTE_DEBUGGING = "remote-debugging";
 
-                XposedBridge.hookAllMethods(cla, methodName, new XC_MethodHook() {
-                    @Override
-                    protected void afterHookedMethod(MethodHookParam param) throws Throwable {
-                        XposedBridge.log(packageName + " " + className + "." + methodName + "()");
-                        param.setResult(true);
+        final Class cla = this.findClass(className, classLoader);
+        final Class claXWalkPreferences = this.findClass(classNameXWalkPreferences, classLoader);
+
+        if (cla != null && markClassLoaderHooked(packageName, className, cla.getClassLoader())) {
+            XposedBridge.log(packageName + " hook " + className + "@" + cla.getClassLoader().getClass().getName() + ":" + cla.getClassLoader().hashCode());
+
+            XposedBridge.hookAllConstructors(cla, new XC_MethodHook() {
+                @Override
+                protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
+                    XposedBridge.log(packageName + " new " + className + "()");
+
+                    XposedHelpers.callStaticMethod(claXWalkPreferences, "setValue", REMOTE_DEBUGGING, true);
+                }
+            });
+
+            XposedBridge.hookAllMethods(claXWalkPreferences, "setValue", new XC_MethodHook() {
+                @Override
+                protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
+                    XposedBridge.log(packageName + " " + classNameXWalkPreferences + ".setValue(" + param.args[0].toString() + ", " + param.args[1].toString() + ")");
+                    if (param.args[0].toString().equals(REMOTE_DEBUGGING)) {
+                        param.args[1] = true;
                     }
-                });
-            }
+                }
+            });
+        }
+    }
+
+    private void hookTaobao(final ClassLoader classLoader, final String packageName) {
+        final String className = "c8.STbr";
+        final String methodName = "isAppDebug";
+        final Class cla = this.findClass(className, classLoader);
+        if (cla != null && this.findMethod(cla, methodName) != null && markClassLoaderHooked(packageName, className, cla.getClassLoader())) {
+
+            XposedBridge.log(packageName + " hook " + className + "." + methodName + "()@" + cla.getClassLoader().getClass().getName() + ":" + cla.getClassLoader().hashCode());
+
+            XposedBridge.hookAllMethods(cla, methodName, new XC_MethodHook() {
+                @Override
+                protected void afterHookedMethod(MethodHookParam param) throws Throwable {
+                    XposedBridge.log(packageName + " " + className + "." + methodName + "()");
+                    param.setResult(true);
+                }
+            });
         }
     }
 
@@ -109,7 +154,7 @@ public class WebViewHook implements IXposedHookLoadPackage {
 
         XposedBridge.log(packageName + " load");
 
-        hookWebView(lpparam.classLoader, packageName);
+        hookAll(lpparam.classLoader, packageName);
 
         Class[] loaderClassList = {
                 BaseDexClassLoader.class,
@@ -126,7 +171,7 @@ public class WebViewHook implements IXposedHookLoadPackage {
 
                     XposedBridge.log(packageName + " new " + classLoader.getClass().getName() + "()");
 
-                    hookWebView(classLoader, packageName);
+                    hookAll(classLoader, packageName);
                 }
             });
         }

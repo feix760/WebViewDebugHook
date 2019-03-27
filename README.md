@@ -24,6 +24,7 @@ But the most app are third parties, webview debugging is disabled, `WebViewDebug
 - Android Webview
 - Tencent X5 Webview
 - UC U4/U3 Webview
+- XWalkView (微信小程序)
 
 *You can post an issue to support more webview*
 
