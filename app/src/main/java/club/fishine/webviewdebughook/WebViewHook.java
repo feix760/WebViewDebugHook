@@ -65,8 +65,7 @@ public class WebViewHook implements IXposedHookLoadPackage {
                 "com.tencent.smtt.sdk.WebView",  // tencent x5
                 "com.uc.webview.export.WebView", // UC
         };
-        for (int i = 0; i < webviewList.length; i++) {
-            final String className = webviewList[i];
+        for (final String className : webviewList) {
 
             final Class cla = this.findClass(className, classLoader);
 
@@ -137,7 +136,7 @@ public class WebViewHook implements IXposedHookLoadPackage {
 
             XposedBridge.hookAllMethods(cla, methodName, new XC_MethodHook() {
                 @Override
-                protected void afterHookedMethod(MethodHookParam param) throws Throwable {
+                protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
                     XposedBridge.log(packageName + " " + className + "." + methodName + "()");
                     param.setResult(true);
                 }
@@ -161,9 +160,7 @@ public class WebViewHook implements IXposedHookLoadPackage {
                 SecureClassLoader.class,
         };
 
-        for (int i = 0; i < loaderClassList.length; i++) {
-            final Class loaderClass = loaderClassList[i];
-
+        for (final Class loaderClass : loaderClassList) {
             XposedBridge.hookAllConstructors(loaderClass, new XC_MethodHook() {
                 @Override
                 protected void afterHookedMethod(MethodHookParam param) throws Throwable {
@@ -175,5 +172,6 @@ public class WebViewHook implements IXposedHookLoadPackage {
                 }
             });
         }
+
     }
 }
