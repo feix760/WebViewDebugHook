@@ -43,7 +43,11 @@ public class WebViewHook implements IXposedHookLoadPackage {
 
     private Method findMethod(Class cla, String methodName) {
         try {
-            return XposedHelpers.findMethodExact(cla, methodName);
+            for (Method method : cla.getDeclaredMethods()) {
+                if (method.getName().equals(methodName)) {
+                    return method;
+                }
+            }
         } catch (Throwable exception) {
         }
         return null;
@@ -99,8 +103,8 @@ public class WebViewHook implements IXposedHookLoadPackage {
         final String classNameXWalkPreferences = "org.xwalk.core.XWalkPreferences";
         final String REMOTE_DEBUGGING = "remote-debugging";
 
-        final Class cla = this.findClass(className, classLoader);
-        final Class claXWalkPreferences = this.findClass(classNameXWalkPreferences, classLoader);
+        final Class cla = findClass(className, classLoader);
+        final Class claXWalkPreferences = findClass(classNameXWalkPreferences, classLoader);
 
         if (cla != null && markClassLoaderHooked(packageName, className, cla.getClassLoader())) {
             XposedBridge.log(packageName + " hook " + className + "@" + cla.getClassLoader().getClass().getName() + ":" + cla.getClassLoader().hashCode());
@@ -129,8 +133,8 @@ public class WebViewHook implements IXposedHookLoadPackage {
     private void hookTaobao(final ClassLoader classLoader, final String packageName) {
         final String className = "c8.STbr";
         final String methodName = "isAppDebug";
-        final Class cla = this.findClass(className, classLoader);
-        if (cla != null && this.findMethod(cla, methodName) != null && markClassLoaderHooked(packageName, className, cla.getClassLoader())) {
+        final Class cla = findClass(className, classLoader);
+        if (cla != null && findMethod(cla, methodName) != null && markClassLoaderHooked(packageName, className, cla.getClassLoader())) {
 
             XposedBridge.log(packageName + " hook " + className + "." + methodName + "()@" + cla.getClassLoader().getClass().getName() + ":" + cla.getClassLoader().hashCode());
 
@@ -166,7 +170,25 @@ public class WebViewHook implements IXposedHookLoadPackage {
                 protected void afterHookedMethod(MethodHookParam param) throws Throwable {
                     ClassLoader classLoader = (ClassLoader) param.thisObject;
 
-                    XposedBridge.log(packageName + " new " + classLoader.getClass().getName() + "()");
+                    XposedBridge.log(packageName + " new " + classLoader.getClass().getName() + ":" + classLoader.hashCode());
+
+                    hookAll(classLoader, packageName);
+                }
+            });
+        }
+
+        // tencent StubShell
+        final Class TxAppEntry = findClass("com.tencent.StubShell.TxAppEntry", lpparam.classLoader);
+        final String TxAppEntryMethod = "attachBaseContext";
+        if (TxAppEntry != null && findMethod(TxAppEntry, TxAppEntryMethod) != null) {
+            XposedBridge.hookAllMethods(TxAppEntry, TxAppEntryMethod, new XC_MethodHook() {
+                @Override
+                protected void afterHookedMethod(MethodHookParam param) throws Throwable {
+                    Object context = param.args[0];
+
+                    ClassLoader classLoader = (ClassLoader) context.getClass().getMethod("getClassLoader").invoke(context);
+
+                    XposedBridge.log(packageName + " com.tencent.StubShell new " + classLoader.getClass().getName() + ":" + classLoader.hashCode());
 
                     hookAll(classLoader, packageName);
                 }
